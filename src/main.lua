@@ -5,7 +5,7 @@ require("class")
 serpent = require("serpent")
 sql = require("sqlite3")
 json = require("json")
-server = require("server")
+server = require("./server")
 
 p('sqlite version:', sql.version())
 local db = sql.open("recursos/db/MAIN.sqlite")
