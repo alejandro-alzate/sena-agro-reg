@@ -1,4 +1,4 @@
-package.path = package.path .. ";./deps/?.lua;./deps/?/init.lua;./?/init.lua"
+package.path = package.path .. ";./?.lua;./deps/?.lua;./deps/?/init.lua;./?/init.lua;./deps/stream/?.lua"
 
 require("class")
 serpent = require("serpent")

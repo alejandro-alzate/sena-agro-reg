@@ -1,5 +1,15 @@
 # Seccion 1: _Principios de diseño_
 
+## Frontend:
+
+- El usuario accede atravéz de un portal web
+- HTTP (dev: 8080, prod: 80)
+- HTTPS sin implementar (dev: 8443, prod: 443)
+- Los esqueletos van a estar guardados en recursos/server/
+- Los portales web internamente usaran otro socket para comunicarse con las otras partes del sistema
+
+## Backend:
+
 - Usuario maestro por defecto: Nombre → `root`, Contraseña → `toor`
 - El usuario con id 1 tiene acceso indiscriminado a los datos
 - Algoritmo de autenticacion:
