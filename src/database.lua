@@ -1,5 +1,6 @@
 local database = {}
 local sql = require("sqlite3")
+local sha1 = require("sha1")
 local path = "recursos/db/MAIN.sqlite"
 local db
 database.index = {}
@@ -24,7 +25,7 @@ end
 
 function database.getUserByName(name, callback)
 	local query = "select * from users where user = \"%s\""
-	local fmt = string.format(query, name)
+	local fmt = string.format(query, escape(name))
 	db:exec(fmt, callback)
 end
 
@@ -48,7 +49,17 @@ function database.getOrMakeToken(username, callback)
 					if token ~= "" then
 						return callback(token)
 					else
-						return callback(nil)
+						local newTokenQuery = "insert into tokens (owner, token, expires) values (%d, '%s', %d);"
+						local time = os.time()
+						local newToken = sha1(tostring(time + 3600))
+						local expires = -1 -- Sin usar aun
+						local owner = id
+
+						local fmt = string.format(newTokenQuery, owner, newToken, expires)
+						p(fmt)
+						db:exec(fmt, p)
+
+						return callback(newToken)
 					end
 				end)
 		end)
