@@ -11,7 +11,6 @@ local uv = require('uv')
 local ffi = require('ffi')
 
 return function (base, headerName)
-print(base, headerName)
   local isBundle = false
   if base:match("^bundle:") then
     base = base:gsub("^bundle:", "")

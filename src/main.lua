@@ -5,4 +5,4 @@ serpent = require("serpent")
 sql = require("sqlite3")
 json = require("json")
 
-print(serpent.block(sql))
+p('sqlite version:', sql.version())
