@@ -76,7 +76,8 @@ local function handleLogin(data, res)
 					function(token)
 						res:setHeader("Content-Type", "application/json")
 						res.statusCode = 200
-						res:finish('{"success": true, "token": "%s", "message": "Login successful"}')
+						local data = string.format('{"success": true, "token": "%s", "message": "Login successful"}', token)
+						res:finish(data)
 					end)
 
 			else
