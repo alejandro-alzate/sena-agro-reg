@@ -1,0 +1,1674 @@
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>SENA Agro Reg - Dashboard</title>
+		<link rel="stylesheet" href="../css/main.css" />
+		<style>
+			/* Dashboard specific styles */
+			.dashboard-tabs {
+				background: white;
+				border-radius: var(--border-radius);
+				box-shadow: var(--box-shadow);
+				margin-bottom: 2rem;
+				overflow: hidden;
+			}
+
+			.tab-nav {
+				display: flex;
+				background: var(--light-color);
+				border-bottom: 1px solid #dee2e6;
+				overflow-x: auto;
+			}
+
+			.tab-nav-item {
+				padding: 1rem 1.5rem;
+				background: none;
+				border: none;
+				cursor: pointer;
+				color: var(--dark-color);
+				font-weight: 500;
+				transition: var(--transition);
+				white-space: nowrap;
+				border-bottom: 3px solid transparent;
+			}
+
+			.tab-nav-item:hover {
+				background: rgba(44, 85, 48, 0.1);
+			}
+
+			.tab-nav-item.active {
+				color: var(--primary-color);
+				border-bottom-color: var(--primary-color);
+				background: white;
+			}
+
+			.tab-content {
+				padding: 2rem;
+				display: none;
+			}
+
+			.tab-content.active {
+				display: block;
+			}
+
+			.action-toolbar {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 1.5rem;
+				flex-wrap: wrap;
+				gap: 1rem;
+			}
+
+			.search-box {
+				max-width: 300px;
+				flex: 1;
+			}
+
+			.data-table {
+				background: white;
+				border-radius: var(--border-radius);
+				overflow: hidden;
+				box-shadow: var(--box-shadow);
+			}
+
+			.table-actions {
+				display: flex;
+				gap: 0.5rem;
+			}
+
+			.modal {
+				display: none;
+				position: fixed;
+				z-index: 1050;
+				left: 0;
+				top: 0;
+				width: 100%;
+				height: 100%;
+				background-color: rgba(0, 0, 0, 0.5);
+				backdrop-filter: blur(5px);
+			}
+
+			.modal.show {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			.modal-dialog {
+				background: white;
+				border-radius: var(--border-radius);
+				box-shadow: var(--box-shadow);
+				max-width: 500px;
+				width: 90%;
+				max-height: 90vh;
+				overflow-y: auto;
+			}
+
+			.modal-header {
+				padding: 1.5rem;
+				border-bottom: 1px solid #dee2e6;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+
+			.modal-body {
+				padding: 1.5rem;
+			}
+
+			.modal-footer {
+				padding: 1.5rem;
+				border-top: 1px solid #dee2e6;
+				display: flex;
+				justify-content: flex-end;
+				gap: 0.5rem;
+			}
+
+			.close-btn {
+				background: none;
+				border: none;
+				font-size: 1.5rem;
+				cursor: pointer;
+				color: #666;
+			}
+
+			.stats-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+				gap: 1rem;
+				margin-bottom: 2rem;
+			}
+
+			.stat-card {
+				background: white;
+				padding: 1.5rem;
+				border-radius: var(--border-radius);
+				box-shadow: var(--box-shadow);
+				text-align: center;
+			}
+
+			.stat-number {
+				font-size: 2rem;
+				font-weight: bold;
+				color: var(--primary-color);
+			}
+
+			.stat-label {
+				color: #666;
+				margin-top: 0.5rem;
+			}
+
+			.role-badges {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.25rem;
+			}
+
+			.role-badge {
+				background: var(--accent-color);
+				color: white;
+				padding: 0.25rem 0.5rem;
+				border-radius: 12px;
+				font-size: 0.75rem;
+				font-weight: 500;
+			}
+
+			.status-badge {
+				padding: 0.25rem 0.5rem;
+				border-radius: 12px;
+				font-size: 0.75rem;
+				font-weight: 500;
+			}
+
+			.status-active {
+				background: var(--success-color);
+				color: white;
+			}
+
+			.status-inactive {
+				background: var(--danger-color);
+				color: white;
+			}
+
+			.status-pending {
+				background: var(--warning-color);
+				color: var(--dark-color);
+			}
+
+			.permission-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+				gap: 1rem;
+			}
+
+			.permission-item {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+			}
+
+			@media (max-width: 768px) {
+				.action-toolbar {
+					flex-direction: column;
+					align-items: stretch;
+				}
+
+				.search-box {
+					max-width: none;
+				}
+
+				.table-actions {
+					flex-direction: column;
+				}
+
+				.stats-grid {
+					grid-template-columns: 1fr;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<!-- Dashboard Header -->
+		<header class="dashboard-header">
+			<div class="container">
+				<nav class="dashboard-nav">
+					<div class="logo">SENA Agro Reg</div>
+					<div class="user-menu">
+						<span id="welcome-user">Cargando...</span>
+						<button
+							class="btn btn-secondary btn-sm"
+							onclick="logout()"
+						>
+							Cerrar Sesión
+						</button>
+					</div>
+				</nav>
+			</div>
+		</header>
+
+		<!-- Dashboard Main Content -->
+		<main class="dashboard-main">
+			<div class="container">
+				<!-- Dashboard Tabs -->
+				<div class="dashboard-tabs">
+					<nav class="tab-nav">
+						<button
+							class="tab-nav-item"
+							id="tab-users"
+							onclick="switchTab('users')"
+						>
+							Usuarios
+						</button>
+						<button
+							class="tab-nav-item"
+							id="tab-inventory"
+							onclick="switchTab('inventory')"
+						>
+							Inventario
+						</button>
+						<button
+							class="tab-nav-item"
+							id="tab-reminders"
+							onclick="switchTab('reminders')"
+						>
+							Recordatorios
+						</button>
+						<button
+							class="tab-nav-item"
+							id="tab-roles"
+							onclick="switchTab('roles')"
+						>
+							Roles
+						</button>
+						<button
+							class="tab-nav-item"
+							id="tab-sessions"
+							onclick="switchTab('sessions')"
+						>
+							Sesiones
+						</button>
+						<button
+							class="tab-nav-item"
+							id="tab-events"
+							onclick="switchTab('events')"
+						>
+							Eventos
+						</button>
+					</nav>
+
+					<!-- Users Tab -->
+					<div class="tab-content" id="content-users">
+						<div class="action-toolbar">
+							<h2>Gestión de Usuarios</h2>
+							<div class="d-flex" style="gap: 1rem">
+								<input
+									type="text"
+									class="form-control search-box"
+									placeholder="Buscar usuarios..."
+									id="search-users"
+								/>
+								<button
+									class="btn btn-primary"
+									id="btn-add-user"
+									onclick="openUserModal()"
+								>
+									Agregar Usuario
+								</button>
+							</div>
+						</div>
+
+						<div class="stats-grid">
+							<div class="stat-card">
+								<div class="stat-number" id="total-users">
+									0
+								</div>
+								<div class="stat-label">Total Usuarios</div>
+							</div>
+							<div class="stat-card">
+								<div class="stat-number" id="active-users">
+									0
+								</div>
+								<div class="stat-label">Usuarios Activos</div>
+							</div>
+						</div>
+
+						<div class="data-table">
+							<table class="table table-hover">
+								<thead>
+									<tr>
+										<th>ID</th>
+										<th>Usuario</th>
+										<th>Contacto</th>
+										<th>Roles</th>
+										<th>Estado</th>
+										<th class="write-only">Acciones</th>
+									</tr>
+								</thead>
+								<tbody id="users-table-body">
+									<!-- Users data will be loaded here -->
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+					<!-- Inventory Tab -->
+					<div class="tab-content" id="content-inventory">
+						<div class="action-toolbar">
+							<h2>Gestión de Inventario</h2>
+							<div class="d-flex" style="gap: 1rem">
+								<input
+									type="text"
+									class="form-control search-box"
+									placeholder="Buscar productos..."
+									id="search-inventory"
+								/>
+								<button
+									class="btn btn-primary"
+									id="btn-add-item"
+									onclick="openInventoryModal()"
+								>
+									Agregar Producto
+								</button>
+							</div>
+						</div>
+
+						<div class="stats-grid">
+							<div class="stat-card">
+								<div class="stat-number" id="total-items">
+									0
+								</div>
+								<div class="stat-label">Total Productos</div>
+							</div>
+							<div class="stat-card">
+								<div class="stat-number" id="low-stock-items">
+									0
+								</div>
+								<div class="stat-label">Stock Bajo</div>
+							</div>
+							<div class="stat-card">
+								<div class="stat-number" id="total-value">
+									$0
+								</div>
+								<div class="stat-label">Valor Total</div>
+							</div>
+						</div>
+
+						<div class="data-table">
+							<table class="table table-hover">
+								<thead>
+									<tr>
+										<th>ID</th>
+										<th>Nombre</th>
+										<th>Categoría</th>
+										<th>Stock</th>
+										<th>Precio</th>
+										<th>Estado</th>
+										<th class="write-only">Acciones</th>
+									</tr>
+								</thead>
+								<tbody id="inventory-table-body">
+									<!-- Inventory data will be loaded here -->
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+					<!-- Reminders Tab -->
+					<div class="tab-content" id="content-reminders">
+						<div class="action-toolbar">
+							<h2>Gestión de Recordatorios</h2>
+							<div class="d-flex" style="gap: 1rem">
+								<input
+									type="text"
+									class="form-control search-box"
+									placeholder="Buscar recordatorios..."
+									id="search-reminders"
+								/>
+								<button
+									class="btn btn-primary"
+									id="btn-add-reminder"
+									onclick="openReminderModal()"
+								>
+									Crear Recordatorio
+								</button>
+							</div>
+						</div>
+
+						<div class="stats-grid">
+							<div class="stat-card">
+								<div class="stat-number" id="total-reminders">
+									0
+								</div>
+								<div class="stat-label">
+									Total Recordatorios
+								</div>
+							</div>
+							<div class="stat-card">
+								<div class="stat-number" id="active-reminders">
+									0
+								</div>
+								<div class="stat-label">Activos</div>
+							</div>
+						</div>
+
+						<div class="data-table">
+							<table class="table table-hover">
+								<thead>
+									<tr>
+										<th>ID</th>
+										<th>Asunto</th>
+										<th>Mensaje</th>
+										<th>Programación</th>
+										<th>Estado</th>
+										<th class="write-only">Acciones</th>
+									</tr>
+								</thead>
+								<tbody id="reminders-table-body">
+									<!-- Reminders data will be loaded here -->
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+					<!-- Roles Tab -->
+					<div class="tab-content" id="content-roles">
+						<div class="action-toolbar">
+							<h2>Gestión de Roles</h2>
+							<button
+								class="btn btn-primary"
+								id="btn-add-role"
+								onclick="openRoleModal()"
+							>
+								Crear Rol
+							</button>
+						</div>
+
+						<div class="alert alert-info">
+							<strong>Información:</strong> Los roles se manejan
+							mediante bits. Cada posición representa un permiso
+							específico.
+						</div>
+
+						<div class="data-table">
+							<table class="table table-hover">
+								<thead>
+									<tr>
+										<th>Posición</th>
+										<th>Nombre del Rol</th>
+										<th>Descripción</th>
+										<th>Usuarios con este Rol</th>
+										<th class="write-only">Acciones</th>
+									</tr>
+								</thead>
+								<tbody id="roles-table-body">
+									<!-- Roles data will be loaded here -->
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+					<!-- Sessions Tab -->
+					<div class="tab-content" id="content-sessions">
+						<div class="action-toolbar">
+							<h2>Gestión de Sesiones</h2>
+							<div class="d-flex" style="gap: 1rem">
+								<input
+									type="text"
+									class="form-control search-box"
+									placeholder="Buscar sesiones..."
+									id="search-sessions"
+								/>
+								<button
+									class="btn btn-danger"
+									id="btn-clear-expired"
+									onclick="clearExpiredSessions()"
+								>
+									Limpiar Expiradas
+								</button>
+							</div>
+						</div>
+
+						<div class="stats-grid">
+							<div class="stat-card">
+								<div class="stat-number" id="total-sessions">
+									0
+								</div>
+								<div class="stat-label">Total Sesiones</div>
+							</div>
+							<div class="stat-card">
+								<div class="stat-number" id="active-sessions">
+									0
+								</div>
+								<div class="stat-label">Sesiones Activas</div>
+							</div>
+						</div>
+
+						<div class="data-table">
+							<table class="table table-hover">
+								<thead>
+									<tr>
+										<th>ID</th>
+										<th>Usuario</th>
+										<th>Token</th>
+										<th>Expira</th>
+										<th>Estado</th>
+										<th class="write-only">Acciones</th>
+									</tr>
+								</thead>
+								<tbody id="sessions-table-body">
+									<!-- Sessions data will be loaded here -->
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+					<!-- Events Tab -->
+					<div class="tab-content" id="content-events">
+						<div class="action-toolbar">
+							<h2>Eventos del Sistema</h2>
+							<div class="d-flex" style="gap: 1rem">
+								<input
+									type="text"
+									class="form-control search-box"
+									placeholder="Buscar eventos..."
+									id="search-events"
+								/>
+								<select
+									class="form-control"
+									id="filter-events"
+									style="max-width: 200px"
+								>
+									<option value="">Todos los eventos</option>
+									<option value="login">
+										Inicios de sesión
+									</option>
+									<option value="logout">
+										Cierres de sesión
+									</option>
+									<option value="create">Creaciones</option>
+									<option value="update">
+										Actualizaciones
+									</option>
+									<option value="delete">
+										Eliminaciones
+									</option>
+								</select>
+							</div>
+						</div>
+
+						<div class="stats-grid">
+							<div class="stat-card">
+								<div class="stat-number" id="total-events">
+									0
+								</div>
+								<div class="stat-label">Total Eventos</div>
+							</div>
+							<div class="stat-card">
+								<div class="stat-number" id="today-events">
+									0
+								</div>
+								<div class="stat-label">Eventos Hoy</div>
+							</div>
+						</div>
+
+						<div class="data-table">
+							<table class="table table-hover">
+								<thead>
+									<tr>
+										<th>ID</th>
+										<th>Usuario</th>
+										<th>Fecha</th>
+										<th>Evento</th>
+										<th>Descripción</th>
+									</tr>
+								</thead>
+								<tbody id="events-table-body">
+									<!-- Events data will be loaded here -->
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<!-- Modals -->
+		<!-- User Modal -->
+		<div class="modal" id="user-modal">
+			<div class="modal-dialog">
+				<div class="modal-header">
+					<h5 id="user-modal-title">Agregar Usuario</h5>
+					<button
+						class="close-btn"
+						onclick="closeModal('user-modal')"
+					>
+						&times;
+					</button>
+				</div>
+				<div class="modal-body">
+					<form id="user-form">
+						<input type="hidden" id="user-id" />
+						<div class="form-group">
+							<label class="form-label">Nombre de Usuario</label>
+							<input
+								type="text"
+								class="form-control"
+								id="user-username"
+								required
+							/>
+						</div>
+						<div class="form-group">
+							<label class="form-label">Contacto</label>
+							<input
+								type="text"
+								class="form-control"
+								id="user-contact"
+								required
+							/>
+						</div>
+						<div class="form-group">
+							<label class="form-label">Contraseña</label>
+							<input
+								type="password"
+								class="form-control"
+								id="user-password"
+							/>
+							<small class="text-muted"
+								>Dejar vacío para mantener la contraseña
+								actual</small
+							>
+						</div>
+						<div class="form-group">
+							<label class="form-label">Roles</label>
+							<div class="permission-grid" id="user-roles-grid">
+								<!-- Role checkboxes will be loaded here -->
+							</div>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button
+						class="btn btn-secondary"
+						onclick="closeModal('user-modal')"
+					>
+						Cancelar
+					</button>
+					<button class="btn btn-primary" onclick="saveUser()">
+						Guardar
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Inventory Modal -->
+		<div class="modal" id="inventory-modal">
+			<div class="modal-dialog">
+				<div class="modal-header">
+					<h5 id="inventory-modal-title">Agregar Producto</h5>
+					<button
+						class="close-btn"
+						onclick="closeModal('inventory-modal')"
+					>
+						&times;
+					</button>
+				</div>
+				<div class="modal-body">
+					<form id="inventory-form">
+						<input type="hidden" id="inventory-id" />
+						<div class="form-group">
+							<label class="form-label">Nombre</label>
+							<input
+								type="text"
+								class="form-control"
+								id="inventory-name"
+								required
+							/>
+						</div>
+						<div class="form-group">
+							<label class="form-label">Categoría</label>
+							<input
+								type="text"
+								class="form-control"
+								id="inventory-category"
+								required
+							/>
+						</div>
+						<div class="form-group">
+							<label class="form-label">Stock</label>
+							<input
+								type="number"
+								class="form-control"
+								id="inventory-stock"
+								min="0"
+								required
+							/>
+						</div>
+						<div class="form-group">
+							<label class="form-label">Precio</label>
+							<input
+								type="number"
+								class="form-control"
+								id="inventory-price"
+								min="0"
+								step="0.01"
+								required
+							/>
+						</div>
+						<div class="form-group">
+							<label class="form-label">Descripción</label>
+							<textarea
+								class="form-control"
+								id="inventory-description"
+								rows="3"
+							></textarea>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button
+						class="btn btn-secondary"
+						onclick="closeModal('inventory-modal')"
+					>
+						Cancelar
+					</button>
+					<button
+						class="btn btn-primary"
+						onclick="saveInventoryItem()"
+					>
+						Guardar
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Reminder Modal -->
+		<div class="modal" id="reminder-modal">
+			<div class="modal-dialog">
+				<div class="modal-header">
+					<h5 id="reminder-modal-title">Crear Recordatorio</h5>
+					<button
+						class="close-btn"
+						onclick="closeModal('reminder-modal')"
+					>
+						&times;
+					</button>
+				</div>
+				<div class="modal-body">
+					<form id="reminder-form">
+						<input type="hidden" id="reminder-id" />
+						<div class="form-group">
+							<label class="form-label">Asunto</label>
+							<input
+								type="text"
+								class="form-control"
+								id="reminder-subject"
+								required
+							/>
+						</div>
+						<div class="form-group">
+							<label class="form-label">Mensaje</label>
+							<textarea
+								class="form-control"
+								id="reminder-message"
+								rows="3"
+							></textarea>
+						</div>
+						<div class="form-group">
+							<label class="form-label"
+								>Programación (Cron)</label
+							>
+							<input
+								type="text"
+								class="form-control"
+								id="reminder-cron"
+								placeholder="0 9 * * *"
+								required
+							/>
+							<small class="text-muted"
+								>Formato: minuto hora día mes día_semana</small
+							>
+						</div>
+						<div class="form-group">
+							<label class="form-label">Notificar a Roles</label>
+							<div
+								class="permission-grid"
+								id="reminder-roles-grid"
+							>
+								<!-- Role checkboxes will be loaded here -->
+							</div>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button
+						class="btn btn-secondary"
+						onclick="closeModal('reminder-modal')"
+					>
+						Cancelar
+					</button>
+					<button class="btn btn-primary" onclick="saveReminder()">
+						Guardar
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Role Modal -->
+		<div class="modal" id="role-modal">
+			<div class="modal-dialog">
+				<div class="modal-header">
+					<h5 id="role-modal-title">Crear Rol</h5>
+					<button
+						class="close-btn"
+						onclick="closeModal('role-modal')"
+					>
+						&times;
+					</button>
+				</div>
+				<div class="modal-body">
+					<form id="role-form">
+						<div class="form-group">
+							<label class="form-label"
+								>Posición del Rol (1-64)</label
+							>
+							<input
+								type="number"
+								class="form-control"
+								id="role-position"
+								min="1"
+								max="64"
+								required
+							/>
+						</div>
+						<div class="form-group">
+							<label class="form-label">Nombre del Rol</label>
+							<input
+								type="text"
+								class="form-control"
+								id="role-name"
+								required
+							/>
+						</div>
+						<div class="form-group">
+							<label class="form-label">Descripción</label>
+							<textarea
+								class="form-control"
+								id="role-description"
+								rows="3"
+							></textarea>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button
+						class="btn btn-secondary"
+						onclick="closeModal('role-modal')"
+					>
+						Cancelar
+					</button>
+					<button class="btn btn-primary" onclick="saveRole()">
+						Guardar
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			// Global variables
+			let currentUser = null;
+			let permissions = {};
+			let currentTab = "users";
+
+			// Initialize dashboard
+			document.addEventListener("DOMContentLoaded", function () {
+				checkAuthentication();
+			});
+
+			// Authentication check
+			async function checkAuthentication() {
+				const token = getCookie("auth_token");
+				if (!token) {
+					redirectToLogin();
+					return;
+				}
+
+				try {
+					const response = await fetch("/api/auth/verify", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({ token: token }),
+					});
+
+					if (!response.ok) {
+						throw new Error("Invalid token");
+					}
+
+					const data = await response.json();
+					currentUser = data.user;
+
+					// Update welcome message
+					document.getElementById("welcome-user").textContent =
+						`Bienvenido, ${currentUser.user}`;
+
+					// Load permissions for all tabs
+					await loadPermissions();
+
+					// Initialize first available tab
+					initializeTabs();
+				} catch (error) {
+					console.error("Authentication failed:", error);
+					redirectToLogin();
+				}
+			}
+
+			// Load permissions for all tabs
+			async function loadPermissions() {
+				const tabs = [
+					"users",
+					"inventory",
+					"reminders",
+					"roles",
+					"sessions",
+					"events",
+				];
+
+				for (const tab of tabs) {
+					try {
+						const response = await fetch(
+							`/api/permissions/${tab}`,
+							{
+								method: "GET",
+								headers: {
+									Authorization: `Bearer ${getCookie("auth_token")}`,
+								},
+							},
+						);
+
+						if (response.ok) {
+							const data = await response.json();
+							permissions[tab] = data.permission; // 'none', 'read', 'write'
+						} else {
+							permissions[tab] = "none";
+						}
+					} catch (error) {
+						console.error(
+							`Failed to load permissions for ${tab}:`,
+							error,
+						);
+						permissions[tab] = "none";
+					}
+				}
+			}
+
+			// Initialize tabs based on permissions
+			function initializeTabs() {
+				const tabs = [
+					"users",
+					"inventory",
+					"reminders",
+					"roles",
+					"sessions",
+					"events",
+				];
+				let firstAvailableTab = null;
+
+				tabs.forEach((tab) => {
+					const tabButton = document.getElementById(`tab-${tab}`);
+					const tabContent = document.getElementById(
+						`content-${tab}`,
+					);
+
+					if (permissions[tab] === "none") {
+						// Hide tab completely
+						tabButton.style.display = "none";
+					} else {
+						// Show tab
+						tabButton.style.display = "block";
+
+						if (!firstAvailableTab) {
+							firstAvailableTab = tab;
+						}
+
+						// Hide/show write controls based on permissions
+						const writeElements =
+							tabContent.querySelectorAll(".write-only");
+						writeElements.forEach((element) => {
+							element.style.display =
+								permissions[tab] === "write" ? "" : "none";
+						});
+					}
+				});
+
+				// Switch to first available tab
+				if (firstAvailableTab) {
+					switchTab(firstAvailableTab);
+				} else {
+					// No permissions at all
+					document.querySelector(".dashboard-tabs").innerHTML =
+						'<div class="alert alert-warning">No tienes permisos para acceder a ninguna sección.</div>';
+				}
+			}
+
+			// Tab switching
+			function switchTab(tabName) {
+				// Hide all tabs
+				document.querySelectorAll(".tab-content").forEach((content) => {
+					content.classList.remove("active");
+				});
+
+				document.querySelectorAll(".tab-nav-item").forEach((tab) => {
+					tab.classList.remove("active");
+				});
+
+				// Show selected tab
+				document
+					.getElementById(`content-${tabName}`)
+					.classList.add("active");
+				document
+					.getElementById(`tab-${tabName}`)
+					.classList.add("active");
+
+				currentTab = tabName;
+
+				// Load tab data
+				loadTabData(tabName);
+			}
+
+			// Load data for specific tab
+			async function loadTabData(tabName) {
+				switch (tabName) {
+					case "users":
+						await loadUsers();
+						break;
+					case "inventory":
+						await loadInventory();
+						break;
+					case "reminders":
+						await loadReminders();
+						break;
+					case "roles":
+						await loadRoles();
+						break;
+					case "sessions":
+						await loadSessions();
+						break;
+					case "events":
+						await loadEvents();
+						break;
+				}
+			}
+
+			// Users functions
+			async function loadUsers() {
+				try {
+					const response = await fetch("/api/users", {
+						headers: {
+							Authorization: `Bearer ${getCookie("auth_token")}`,
+						},
+					});
+
+					const data = await response.json();
+
+					// Update stats
+					document.getElementById("total-users").textContent =
+						data.users.length;
+					document.getElementById("active-users").textContent =
+						data.users.filter((u) => u.active).length;
+
+					// Update table
+					const tbody = document.getElementById("users-table-body");
+					tbody.innerHTML = data.users
+						.map(
+							(user) => `
+                    <tr>
+                        <td>${user.id}</td>
+                        <td>${user.user}</td>
+                        <td>${user.contact}</td>
+                        <td>
+                            <div class="role-badges">
+                                ${getRoleBadges(user.roles)}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-badge ${user.active ? "status-active" : "status-inactive"}">
+                                ${user.active ? "Activo" : "Inactivo"}
+                            </span>
+                        </td>
+                        <td class="write-only">
+                            <div class="table-actions">
+                                <button class="btn btn-sm btn-primary" onclick="editUser(${user.id})">Editar</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})">Eliminar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `,
+						)
+						.join("");
+				} catch (error) {
+					console.error("Failed to load users:", error);
+					dashboardAPI.showError("Error al cargar usuarios");
+				}
+			}
+
+			// Get role badges HTML
+			function getRoleBadges(rolesBitmask) {
+				const roles = dashboardAPI.parseRoles(rolesBitmask);
+				return roles
+					.map(
+						(role) => `<span class="role-badge">Rol ${role}</span>`,
+					)
+					.join("");
+			}
+
+			// User modal functions
+			function openUserModal(userId = null) {
+				const modal = document.getElementById("user-modal");
+				const title = document.getElementById("user-modal-title");
+
+				if (userId) {
+					title.textContent = "Editar Usuario";
+					loadUserData(userId);
+				} else {
+					title.textContent = "Agregar Usuario";
+					dashboardAPI.clearForm("user-form");
+				}
+
+				loadRolesGrid("user-roles-grid");
+				modal.classList.add("show");
+			}
+
+			async function loadUserData(userId) {
+				try {
+					const users = await dashboardAPI.getUsers();
+					const user = users.users.find((u) => u.id === userId);
+
+					if (user) {
+						document.getElementById("user-id").value = user.id;
+						document.getElementById("user-username").value =
+							user.user;
+						document.getElementById("user-contact").value =
+							user.contact;
+
+						// Set role checkboxes
+						const roles = dashboardAPI.parseRoles(user.roles);
+						roles.forEach((role) => {
+							const checkbox = document.getElementById(
+								`role-${role}`,
+							);
+							if (checkbox) checkbox.checked = true;
+						});
+					}
+				} catch (error) {
+					console.error("Failed to load user data:", error);
+				}
+			}
+
+			async function saveUser() {
+				if (!dashboardAPI.validateForm("user-form")) {
+					return;
+				}
+
+				const userId = document.getElementById("user-id").value;
+				const userData = {
+					user: document.getElementById("user-username").value,
+					contact: document.getElementById("user-contact").value,
+					password: document.getElementById("user-password").value,
+					roles: getSelectedRoles("user-roles-grid"),
+				};
+
+				try {
+					if (userId) {
+						await dashboardAPI.updateUser(userId, userData);
+						dashboardAPI.showToast(
+							"Usuario actualizado exitosamente",
+							"success",
+						);
+					} else {
+						await dashboardAPI.createUser(userData);
+						dashboardAPI.showToast(
+							"Usuario creado exitosamente",
+							"success",
+						);
+					}
+
+					closeModal("user-modal");
+					loadUsers();
+				} catch (error) {
+					console.error("Failed to save user:", error);
+					dashboardAPI.showError("Error al guardar usuario");
+				}
+			}
+
+			async function deleteUser(userId) {
+				dashboardAPI.confirm(
+					"¿Estás seguro de que quieres eliminar este usuario?",
+					async () => {
+						try {
+							await dashboardAPI.deleteUser(userId);
+							dashboardAPI.showToast(
+								"Usuario eliminado exitosamente",
+								"success",
+							);
+							loadUsers();
+						} catch (error) {
+							console.error("Failed to delete user:", error);
+							dashboardAPI.showError("Error al eliminar usuario");
+						}
+					},
+				);
+			}
+
+			// Inventory functions
+			async function loadInventory() {
+				try {
+					const data = await dashboardAPI.getInventory();
+					const stats = await dashboardAPI.getInventoryStats();
+
+					// Update stats
+					document.getElementById("total-items").textContent =
+						stats.totalItems || 0;
+					document.getElementById("low-stock-items").textContent =
+						stats.lowStockItems || 0;
+					document.getElementById("total-value").textContent =
+						dashboardAPI.formatCurrency(stats.totalValue || 0);
+
+					// Update table
+					const tbody = document.getElementById(
+						"inventory-table-body",
+					);
+					tbody.innerHTML = data.items
+						.map(
+							(item) => `
+                    <tr>
+                        <td>${item.id}</td>
+                        <td>${item.name}</td>
+                        <td>${item.category}</td>
+                        <td>${item.stock}</td>
+                        <td>${dashboardAPI.formatCurrency(item.price)}</td>
+                        <td>
+                            <span class="status-badge ${item.stock > 10 ? "status-active" : item.stock > 0 ? "status-pending" : "status-inactive"}">
+                                ${item.stock > 10 ? "En Stock" : item.stock > 0 ? "Stock Bajo" : "Sin Stock"}
+                            </span>
+                        </td>
+                        <td class="write-only">
+                            <div class="table-actions">
+                                <button class="btn btn-sm btn-primary" onclick="editInventoryItem(${item.id})">Editar</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteInventoryItem(${item.id})">Eliminar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `,
+						)
+						.join("");
+				} catch (error) {
+					console.error("Failed to load inventory:", error);
+					dashboardAPI.showError("Error al cargar inventario");
+				}
+			}
+
+			function openInventoryModal(itemId = null) {
+				const modal = document.getElementById("inventory-modal");
+				const title = document.getElementById("inventory-modal-title");
+
+				if (itemId) {
+					title.textContent = "Editar Producto";
+					loadInventoryItemData(itemId);
+				} else {
+					title.textContent = "Agregar Producto";
+					dashboardAPI.clearForm("inventory-form");
+				}
+
+				modal.classList.add("show");
+			}
+
+			async function saveInventoryItem() {
+				if (!dashboardAPI.validateForm("inventory-form")) {
+					return;
+				}
+
+				const itemId = document.getElementById("inventory-id").value;
+				const itemData = {
+					name: document.getElementById("inventory-name").value,
+					category:
+						document.getElementById("inventory-category").value,
+					stock: parseInt(
+						document.getElementById("inventory-stock").value,
+					),
+					price: parseFloat(
+						document.getElementById("inventory-price").value,
+					),
+					description: document.getElementById(
+						"inventory-description",
+					).value,
+				};
+
+				try {
+					if (itemId) {
+						await dashboardAPI.updateInventoryItem(
+							itemId,
+							itemData,
+						);
+						dashboardAPI.showToast(
+							"Producto actualizado exitosamente",
+							"success",
+						);
+					} else {
+						await dashboardAPI.createInventoryItem(itemData);
+						dashboardAPI.showToast(
+							"Producto creado exitosamente",
+							"success",
+						);
+					}
+
+					closeModal("inventory-modal");
+					loadInventory();
+				} catch (error) {
+					console.error("Failed to save inventory item:", error);
+					dashboardAPI.showError("Error al guardar producto");
+				}
+			}
+
+			// Reminders functions
+			async function loadReminders() {
+				try {
+					const data = await dashboardAPI.getReminders();
+					const stats = await dashboardAPI.getReminderStats();
+
+					// Update stats
+					document.getElementById("total-reminders").textContent =
+						stats.totalReminders || 0;
+					document.getElementById("active-reminders").textContent =
+						stats.activeReminders || 0;
+
+					// Update table
+					const tbody = document.getElementById(
+						"reminders-table-body",
+					);
+					tbody.innerHTML = data.reminders
+						.map(
+							(reminder) => `
+                    <tr>
+                        <td>${reminder.id}</td>
+                        <td>${reminder.subject}</td>
+                        <td>${reminder.message || "Sin mensaje"}</td>
+                        <td><code>${reminder.cron}</code></td>
+                        <td>
+                            <span class="status-badge ${reminder.status ? "status-active" : "status-inactive"}">
+                                ${reminder.status ? "Activo" : "Inactivo"}
+                            </span>
+                        </td>
+                        <td class="write-only">
+                            <div class="table-actions">
+                                <button class="btn btn-sm btn-secondary" onclick="toggleReminder(${reminder.id})">
+                                    ${reminder.status ? "Desactivar" : "Activar"}
+                                </button>
+                                <button class="btn btn-sm btn-primary" onclick="editReminder(${reminder.id})">Editar</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteReminder(${reminder.id})">Eliminar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `,
+						)
+						.join("");
+				} catch (error) {
+					console.error("Failed to load reminders:", error);
+					dashboardAPI.showError("Error al cargar recordatorios");
+				}
+			}
+
+			function openReminderModal(reminderId = null) {
+				const modal = document.getElementById("reminder-modal");
+				const title = document.getElementById("reminder-modal-title");
+
+				if (reminderId) {
+					title.textContent = "Editar Recordatorio";
+					loadReminderData(reminderId);
+				} else {
+					title.textContent = "Crear Recordatorio";
+					dashboardAPI.clearForm("reminder-form");
+				}
+
+				loadRolesGrid("reminder-roles-grid");
+				modal.classList.add("show");
+			}
+
+			// Sessions functions
+			async function loadSessions() {
+				try {
+					const data = await dashboardAPI.getSessions();
+					const stats = await dashboardAPI.getSessionStats();
+
+					// Update stats
+					document.getElementById("total-sessions").textContent =
+						stats.totalSessions || 0;
+					document.getElementById("active-sessions").textContent =
+						stats.activeSessions || 0;
+
+					// Update table
+					const tbody = document.getElementById(
+						"sessions-table-body",
+					);
+					tbody.innerHTML = data.sessions
+						.map(
+							(session) => `
+                    <tr>
+                        <td>${session.id}</td>
+                        <td>${session.username}</td>
+                        <td><code>${session.token.substring(0, 16)}...</code></td>
+                        <td>${session.expires ? dashboardAPI.formatDate(session.expires) : "Sin expiración"}</td>
+                        <td>
+                            <span class="status-badge ${session.active ? "status-active" : "status-inactive"}">
+                                ${session.active ? "Activa" : "Expirada"}
+                            </span>
+                        </td>
+                        <td class="write-only">
+                            <div class="table-actions">
+                                <button class="btn btn-sm btn-danger" onclick="kickSession(${session.id})">Expulsar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `,
+						)
+						.join("");
+				} catch (error) {
+					console.error("Failed to load sessions:", error);
+					dashboardAPI.showError("Error al cargar sesiones");
+				}
+			}
+
+			async function kickSession(sessionId) {
+				dashboardAPI.confirm(
+					"¿Estás seguro de que quieres expulsar esta sesión?",
+					async () => {
+						try {
+							await dashboardAPI.deleteSession(sessionId);
+							dashboardAPI.showToast(
+								"Sesión expulsada exitosamente",
+								"success",
+							);
+							loadSessions();
+						} catch (error) {
+							console.error("Failed to kick session:", error);
+							dashboardAPI.showError("Error al expulsar sesión");
+						}
+					},
+				);
+			}
+
+			async function clearExpiredSessions() {
+				try {
+					await dashboardAPI.clearExpiredSessions();
+					dashboardAPI.showToast(
+						"Sesiones expiradas eliminadas",
+						"success",
+					);
+					loadSessions();
+				} catch (error) {
+					console.error("Failed to clear expired sessions:", error);
+					dashboardAPI.showError("Error al limpiar sesiones");
+				}
+			}
+
+			// Events functions
+			async function loadEvents() {
+				try {
+					const data = await dashboardAPI.getEvents();
+					const stats = await dashboardAPI.getEventStats();
+
+					// Update stats
+					document.getElementById("total-events").textContent =
+						stats.totalEvents || 0;
+					document.getElementById("today-events").textContent =
+						stats.todayEvents || 0;
+
+					// Update table
+					const tbody = document.getElementById("events-table-body");
+					tbody.innerHTML = data.events
+						.map(
+							(event) => `
+                    <tr>
+                        <td>${event.id}</td>
+                        <td>${event.username}</td>
+                        <td>${dashboardAPI.formatDate(event.date)}</td>
+                        <td>${event.name}</td>
+                        <td>${event.description}</td>
+                    </tr>
+                `,
+						)
+						.join("");
+				} catch (error) {
+					console.error("Failed to load events:", error);
+					dashboardAPI.showError("Error al cargar eventos");
+				}
+			}
+
+			// Roles functions
+			async function loadRoles() {
+				try {
+					const data = await dashboardAPI.getRoles();
+
+					// Update table
+					const tbody = document.getElementById("roles-table-body");
+					tbody.innerHTML = data.roles
+						.map(
+							(role) => `
+                    <tr>
+                        <td>${role.position}</td>
+                        <td>${role.name}</td>
+                        <td>${role.description || "Sin descripción"}</td>
+                        <td>${role.userCount || 0}</td>
+                        <td class="write-only">
+                            <div class="table-actions">
+                                <button class="btn btn-sm btn-primary" onclick="editRole(${role.position})">Editar</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteRole(${role.position})">Eliminar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `,
+						)
+						.join("");
+				} catch (error) {
+					console.error("Failed to load roles:", error);
+					dashboardAPI.showError("Error al cargar roles");
+				}
+			}
+
+			// Utility functions
+			function closeModal(modalId) {
+				const modal = document.getElementById(modalId);
+				modal.classList.remove("show");
+			}
+
+			function logout() {
+				dashboardAPI.logout();
+			}
+
+			function getCookie(name) {
+				return dashboardAPI.getCookie(name);
+			}
+
+			function redirectToLogin() {
+				window.location.href = "/login";
+			}
+
+			async function loadRolesGrid(containerId) {
+				try {
+					const data = await dashboardAPI.getRoles();
+					const container = document.getElementById(containerId);
+
+					container.innerHTML = data.roles
+						.map(
+							(role) => `
+                    <div class="permission-item">
+                        <input type="checkbox" id="role-${role.position}" value="${role.position}">
+                        <label for="role-${role.position}">${role.name}</label>
+                    </div>
+                `,
+						)
+						.join("");
+				} catch (error) {
+					console.error("Failed to load roles grid:", error);
+				}
+			}
+
+			function getSelectedRoles(containerId) {
+				const container = document.getElementById(containerId);
+				const checkboxes = container.querySelectorAll(
+					'input[type="checkbox"]:checked',
+				);
+				const roles = Array.from(checkboxes).map((cb) =>
+					parseInt(cb.value),
+				);
+				return dashboardAPI.buildRolesBitmask(roles);
+			}
+
+			// Search functions
+			document.addEventListener("DOMContentLoaded", function () {
+				// Setup search handlers
+				[
+					"users",
+					"inventory",
+					"reminders",
+					"sessions",
+					"events",
+				].forEach((tab) => {
+					const searchInput = document.getElementById(
+						`search-${tab}`,
+					);
+					if (searchInput) {
+						searchInput.addEventListener(
+							"input",
+							dashboardAPI.debounce((e) => {
+								dashboardAPI.searchTable(
+									e.target.value,
+									`${tab}-table-body`,
+								);
+							}, 300),
+						);
+					}
+				});
+
+				// Setup filter for events
+				const eventsFilter = document.getElementById("filter-events");
+				if (eventsFilter) {
+					eventsFilter.addEventListener("change", (e) => {
+						loadEvents({ type: e.target.value });
+					});
+				}
+			});
+
+			// Click outside modal to close
+			document.addEventListener("click", function (e) {
+				if (e.target.classList.contains("modal")) {
+					e.target.classList.remove("show");
+				}
+			});
+		</script>
+		<script src="../js/dashboard-api.js"></script>
+	</body>
+</html>
