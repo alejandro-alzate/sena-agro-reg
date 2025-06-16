@@ -2,6 +2,8 @@
 
 ## Frontend:
 
+- El html, css es generado con IA debido a la cantidad de "boilerplate" que se necesita para crear un sitio placentero de ver
+    - La logica es hecha a mano el 99% de las veces
 - El usuario accede atravéz de un portal web
 - HTTP (dev: 8080, prod: 80)
 - HTTPS sin implementar (dev: 8443, prod: 443)

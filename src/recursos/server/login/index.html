@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>SENA Agro Reg - Iniciar Sesión</title>
+		<link rel="stylesheet" href="../css/main.css" />
+	</head>
+	<body>
+		<div class="auth-container">
+			<div class="auth-card">
+				<div class="auth-header">
+					<h1>SENA Agro Reg</h1>
+					<p>Sistema de Registro Agrícola</p>
+				</div>
+
+				<!-- Alert container for messages -->
+				<div id="alert-container"></div>
+
+				<form id="loginForm">
+					<div class="form-group">
+						<label for="username" class="form-label">Usuario</label>
+						<input
+							type="text"
+							id="username"
+							name="username"
+							class="form-control"
+							required
+							autocomplete="username"
+							placeholder="Ingrese su nombre de usuario"
+						/>
+						<div
+							class="invalid-feedback"
+							id="username-feedback"
+						></div>
+					</div>
+
+					<div class="form-group">
+						<label for="password" class="form-label"
+							>Contraseña</label
+						>
+						<input
+							type="password"
+							id="password"
+							name="password"
+							class="form-control"
+							required
+							autocomplete="current-password"
+							placeholder="Ingrese su contraseña"
+						/>
+						<div
+							class="invalid-feedback"
+							id="password-feedback"
+						></div>
+					</div>
+
+					<div class="form-group">
+						<button
+							type="submit"
+							class="btn btn-primary btn-block"
+							id="loginButton"
+						>
+							<span id="loginText">Iniciar Sesión</span>
+							<span
+								id="loginSpinner"
+								class="loading d-none"
+							></span>
+						</button>
+					</div>
+				</form>
+
+				<div class="text-center mt-3">
+					<small class="text-secondary">
+						¿Olvidó su contraseña? Contacte al administrador del
+						sistema.
+					</small>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			// Login form handling
+			class LoginManager {
+				constructor() {
+					this.form = document.getElementById("loginForm");
+					this.usernameInput = document.getElementById("username");
+					this.passwordInput = document.getElementById("password");
+					this.loginButton = document.getElementById("loginButton");
+					this.loginText = document.getElementById("loginText");
+					this.loginSpinner = document.getElementById("loginSpinner");
+					this.alertContainer =
+						document.getElementById("alert-container");
+
+					this.initEventListeners();
+				}
+
+				initEventListeners() {
+					this.form.addEventListener("submit", (e) =>
+						this.handleLogin(e),
+					);
+
+					// Clear validation on input
+					this.usernameInput.addEventListener("input", () =>
+						this.clearFieldValidation("username"),
+					);
+					this.passwordInput.addEventListener("input", () =>
+						this.clearFieldValidation("password"),
+					);
+				}
+
+				async handleLogin(event) {
+					event.preventDefault();
+
+					const username = this.usernameInput.value.trim();
+					const password = this.passwordInput.value;
+
+					// Basic validation
+					if (!this.validateForm(username, password)) {
+						return;
+					}
+
+					this.setLoading(true);
+					this.clearAlerts();
+
+					try {
+						const response = await this.authenticate(
+							username,
+							password,
+						);
+
+						if (response.success) {
+							this.showAlert(
+								"Inicio de sesión exitoso. Redirigiendo...",
+								"success",
+							);
+
+							// Store token if provided
+							if (response.token) {
+								localStorage.setItem(
+									"authToken",
+									response.token,
+								);
+							}
+
+							// Redirect after a short delay
+							setTimeout(() => {
+								window.location.href =
+									response.redirect || "/dashboard";
+							}, 1500);
+						} else {
+							this.showAlert(
+								response.message || "Credenciales incorrectas",
+								"danger",
+							);
+							this.clearForm();
+						}
+					} catch (error) {
+						console.error("Login error:", error);
+						this.showAlert(
+							"Error de conexión. Intente nuevamente.",
+							"danger",
+						);
+					} finally {
+						this.setLoading(false);
+					}
+				}
+
+				async authenticate(username, password) {
+					// This would normally make an API call to the backend
+					// For now, implementing a mock authentication
+
+					const response = await fetch("/api/auth/login", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							username: username,
+							password: password,
+						}),
+					});
+
+					if (!response.ok) {
+						throw new Error(
+							`HTTP error! status: ${response.status}`,
+						);
+					}
+
+					return await response.json();
+				}
+
+				validateForm(username, password) {
+					let isValid = true;
+
+					// Username validation
+					if (!username) {
+						this.setFieldError(
+							"username",
+							"El nombre de usuario es requerido",
+						);
+						isValid = false;
+					} else if (username.length < 3) {
+						this.setFieldError(
+							"username",
+							"El nombre de usuario debe tener al menos 3 caracteres",
+						);
+						isValid = false;
+					}
+
+					// Password validation
+					if (!password) {
+						this.setFieldError(
+							"password",
+							"La contraseña es requerida",
+						);
+						isValid = false;
+					} else if (password.length < 4) {
+						this.setFieldError(
+							"password",
+							"La contraseña debe tener al menos 4 caracteres",
+						);
+						isValid = false;
+					}
+
+					return isValid;
+				}
+
+				setFieldError(fieldName, message) {
+					const input = document.getElementById(fieldName);
+					const feedback = document.getElementById(
+						`${fieldName}-feedback`,
+					);
+
+					input.classList.add("is-invalid");
+					input.classList.remove("is-valid");
+					feedback.textContent = message;
+				}
+
+				clearFieldValidation(fieldName) {
+					const input = document.getElementById(fieldName);
+					const feedback = document.getElementById(
+						`${fieldName}-feedback`,
+					);
+
+					input.classList.remove("is-invalid", "is-valid");
+					feedback.textContent = "";
+				}
+
+				setLoading(loading) {
+					this.loginButton.disabled = loading;
+
+					if (loading) {
+						this.loginText.classList.add("d-none");
+						this.loginSpinner.classList.remove("d-none");
+					} else {
+						this.loginText.classList.remove("d-none");
+						this.loginSpinner.classList.add("d-none");
+					}
+				}
+
+				showAlert(message, type = "info") {
+					const alertDiv = document.createElement("div");
+					alertDiv.className = `alert alert-${type}`;
+					alertDiv.textContent = message;
+
+					this.alertContainer.innerHTML = "";
+					this.alertContainer.appendChild(alertDiv);
+
+					// Auto-hide success messages
+					if (type === "success") {
+						setTimeout(() => {
+							alertDiv.remove();
+						}, 3000);
+					}
+				}
+
+				clearAlerts() {
+					this.alertContainer.innerHTML = "";
+				}
+
+				clearForm() {
+					this.passwordInput.value = "";
+					this.clearFieldValidation("username");
+					this.clearFieldValidation("password");
+				}
+			}
+
+			// Initialize login manager when DOM is loaded
+			document.addEventListener("DOMContentLoaded", () => {
+				new LoginManager();
+			});
+
+			// Check if user is already logged in
+			if (localStorage.getItem("authToken")) {
+				// Optionally redirect to dashboard if already logged in
+				// window.location.
+				href = "/dashboard";
+			}
+		</script>
+	</body>
+</html>
