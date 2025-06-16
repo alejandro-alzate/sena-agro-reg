@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>SENA Agro Reg - Sistema de Registro Agrícola</title>
+		<link rel="stylesheet" href="css/main.css" />
+		<style>
+			body {
+				font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+				margin: 0;
+				padding: 0;
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+				min-height: 100vh;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+
+			.loader-container {
+				text-align: center;
+				color: white;
+			}
+
+			.loader {
+				border: 4px solid rgba(255, 255, 255, 0.3);
+				border-radius: 50%;
+				border-top: 4px solid white;
+				width: 50px;
+				height: 50px;
+				animation: spin 1s linear infinite;
+				margin: 0 auto 20px;
+			}
+
+			@keyframes spin {
+				0% {
+					transform: rotate(0deg);
+				}
+				100% {
+					transform: rotate(360deg);
+				}
+			}
+
+			.status-message {
+				font-size: 18px;
+				margin-top: 10px;
+			}
+
+			.error-message {
+				color: #ff6b6b;
+				background: rgba(255, 255, 255, 0.1);
+				padding: 15px;
+				border-radius: 8px;
+				margin-top: 20px;
+				backdrop-filter: blur(10px);
+			}
+		</style>
+	</head>
+	<body>
+		<div class="loader-container">
+			<div class="loader"></div>
+			<div class="status-message">Verificando autenticación...</div>
+			<div id="error-container"></div>
+		</div>
+
+		<script>
+			class AuthManager {
+				constructor() {
+					this.init();
+				}
+
+				init() {
+					this.updateStatus("Verificando token de autenticación...");
+					this.checkAuthStatus();
+				}
+
+				updateStatus(message) {
+					const statusElement =
+						document.querySelector(".status-message");
+					if (statusElement) {
+						statusElement.textContent = message;
+					}
+				}
+
+				showError(message) {
+					const errorContainer =
+						document.getElementById("error-container");
+					errorContainer.innerHTML = `<div class="error-message">${message}</div>`;
+				}
+
+				getCookie(name) {
+					const value = `; ${document.cookie}`;
+					const parts = value.split(`; ${name}=`);
+					if (parts.length === 2) {
+						return parts.pop().split(";").shift();
+					}
+					return null;
+				}
+
+				setCookie(name, value, days = 7) {
+					const expires = new Date();
+					expires.setTime(
+						expires.getTime() + days * 24 * 60 * 60 * 1000,
+					);
+					document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Strict`;
+				}
+
+				deleteCookie(name) {
+					document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+				}
+
+				async validateToken(token) {
+					try {
+						const response = await fetch("/api/auth/validate", {
+							method: "POST",
+							headers: {
+								"Content-Type": "application/json",
+								Authorization: `Bearer ${token}`,
+							},
+							body: JSON.stringify({ token: token }),
+						});
+
+						if (!response.ok) {
+							throw new Error(
+								`HTTP ${response.status}: ${response.statusText}`,
+							);
+						}
+
+						const data = await response.json();
+						return data.valid === true;
+					} catch (error) {
+						console.error("Token validation error:", error);
+						return false;
+					}
+				}
+
+				async checkAuthStatus() {
+					try {
+						// Get token from cookie
+						const token = this.getCookie("auth_token");
+
+						if (!token) {
+							this.updateStatus(
+								"No se encontró token de autenticación",
+							);
+							this.redirectToLogin("No hay sesión activa");
+							return;
+						}
+
+						this.updateStatus("Validando token con el servidor...");
+
+						// Validate token with server
+						const isValid = await this.validateToken(token);
+
+						if (isValid) {
+							this.updateStatus(
+								"Token válido, redirigiendo al dashboard...",
+							);
+							this.redirectToDashboard();
+						} else {
+							this.updateStatus("Token inválido o expirado");
+							this.deleteCookie("auth_token");
+							this.redirectToLogin("Su sesión ha expirado");
+						}
+					} catch (error) {
+						console.error("Auth check error:", error);
+						this.showError("Error de conexión con el servidor");
+						this.updateStatus("Error de conectividad");
+
+						// Fallback: redirect to login after delay
+						setTimeout(() => {
+							this.redirectToLogin("Error de conectividad");
+						}, 3000);
+					}
+				}
+
+				redirectToLogin(reason = "") {
+					setTimeout(() => {
+						const url = reason
+							? `/login?reason=${encodeURIComponent(reason)}`
+							: "/login";
+						window.location.href = url;
+					}, 1500);
+				}
+
+				redirectToDashboard() {
+					setTimeout(() => {
+						window.location.href = "/dashboard";
+					}, 1500);
+				}
+			}
+
+			// Initialize auth manager when DOM is loaded
+			document.addEventListener("DOMContentLoaded", () => {
+				new AuthManager();
+			});
+
+			// Fallback for older browsers
+			if (document.readyState === "loading") {
+				document.addEventListener("DOMContentLoaded", () => {
+					new AuthManager();
+				});
+			} else {
+				new AuthManager();
+			}
+
+			// Security headers check (optional enhancement)
+			if (
+				window.location.protocol !== "https:" &&
+				window.location.hostname !== "localhost"
+			) {
+				console.warn(
+					"SENA Agro Reg: Se recomienda usar HTTPS en producción",
+				);
+			}
+		</script>
+	</body>
+</html>
