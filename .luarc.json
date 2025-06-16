@@ -1,0 +1,7 @@
+{
+	"files.exclude": ["deps"],
+    "diagnostics.globals": [
+        "class",
+        "json"
+    ]
+}
