@@ -95,6 +95,38 @@ local function handleUsers(data, res)
 	res:finish('{"message": "Users endpoint called", "data": []}')
 end
 
+local function handleTokenValidation(data, res)
+	local token = data.token
+	print("Token validation request:", token)
+
+	if not token then
+		res:setHeader("Content-Type", "application/json")
+		res.statusCode = 400
+		res:finish('{"valid": false, "error": "Token required"}')
+		return
+	end
+
+	-- For now, validate tokens by checking if they exist in database
+	database.validateToken(token, function(isValid, username, userInfo)
+		res:setHeader("Content-Type", "application/json")
+		res.statusCode = 200
+		if isValid then
+			local userObj = string.format('{"valid": true, "user": {"user": "%s", "id": %d, "roles": "%s"}}',
+				userInfo.user, userInfo.id, userInfo.roles or "")
+			res:finish(userObj)
+		else
+			res:finish('{"valid": false, "error": "Invalid or expired token"}')
+		end
+	end)
+end
+
+local function handleEvents(data, res)
+	print("Event logged:", data.name, data.description)
+	res:setHeader("Content-Type", "application/json")
+	res.statusCode = 200
+	res:finish('{"success": true, "message": "Event logged"}')
+end
+
 local function parseRequestBody(req, callback)
 	local body = ""
 
@@ -151,8 +183,14 @@ local function api(req, res)
 
 			if url == "/api/auth/login" then
 				handleLogin(data, res)
+			elseif url == "/api/auth/validate" then
+				handleTokenValidation(data, res)
+			elseif url == "/api/auth/verify" then
+				handleTokenValidation(data, res)
 			elseif url == "/api/users" then
 				handleUsers(data, res)
+			elseif url == "/api/events" then
+				handleEvents(data, res)
 			else
 				res:setHeader("Content-Type", "application/json")
 				res.statusCode = 404

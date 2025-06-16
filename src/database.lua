@@ -66,4 +66,33 @@ function database.getOrMakeToken(username, callback)
 		end)
 end
 
+function database.validateToken(token, callback)
+	token = escape(token)
+	local query = "select tokens.*, users.* from tokens join users on tokens.owner = users.id where tokens.token = '%s'"
+	local fmt = string.format(query, token)
+
+	local found = false
+	local username = nil
+	local userInfo = {}
+
+	db:exec(fmt,
+		function(t)
+			found = true
+			-- tokens: id(1), owner(2), token(3), expires(4)
+			-- users: id(5), user(6), contact(7), roles(8), salt(9), hash(10)
+			username = t[6] -- users.user field
+			userInfo = {
+				id = t[5],
+				user = t[6],
+				contact = t[7],
+				roles = t[8]
+			}
+			p("Token validation result:", t)
+		end,
+		function()
+			callback(found, username, userInfo)
+		end
+	)
+end
+
 return database
