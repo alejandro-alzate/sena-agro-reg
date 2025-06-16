@@ -166,12 +166,15 @@ function sqlite_db:errmsg()
 end
 sqlite_db.error_message = sqlite_db.errmsg
 
-function sqlite_db:exec(sql, func)
+function sqlite_db:exec(sql, func, endfunc)
   local stmt = self:prepare(sql)
   while stmt:step() do
     if func ~= nil and type(func) == 'function' then
       func(stmt:get_values())
     end
+  end
+  if endfunc ~= nil and type(endfunc) == 'function' then
+    endfunc(stmt:get_values())
   end
   stmt:finalize()
 end
