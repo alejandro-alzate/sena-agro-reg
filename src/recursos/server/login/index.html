@@ -7,17 +7,17 @@
 		<link rel="stylesheet" href="../css/main.css" />
 	</head>
 	<body>
-		<div class="auth-container">
-			<div class="auth-card">
-				<div class="auth-header">
-					<h1>SENA Agro Reg</h1>
-					<p>Sistema de Registro Agrícola</p>
+		<div class="login-container">
+			<div class="login-card">
+				<div class="login-header">
+					<div class="logo">SENA Agro Reg</div>
+					<div class="subtitle">Sistema de Gestión Agrícola</div>
 				</div>
 
 				<!-- Alert container for messages -->
-				<div id="alert-container"></div>
+				<div id="alert-container" role="alert" aria-live="polite"></div>
 
-				<form id="loginForm">
+				<form id="login-form" novalidate>
 					<div class="form-group">
 						<label for="username" class="form-label">Usuario</label>
 						<input
@@ -25,13 +25,15 @@
 							id="username"
 							name="username"
 							class="form-control"
+							placeholder="Ingrese su usuario"
 							required
 							autocomplete="username"
-							placeholder="Ingrese su nombre de usuario"
+							aria-describedby="username-error"
 						/>
 						<div
 							class="invalid-feedback"
-							id="username-feedback"
+							id="username-error"
+							role="alert"
 						></div>
 					</div>
 
@@ -44,178 +46,286 @@
 							id="password"
 							name="password"
 							class="form-control"
+							placeholder="Ingrese su contraseña"
 							required
 							autocomplete="current-password"
-							placeholder="Ingrese su contraseña"
+							aria-describedby="password-error"
 						/>
 						<div
 							class="invalid-feedback"
-							id="password-feedback"
+							id="password-error"
+							role="alert"
 						></div>
 					</div>
 
-					<div class="form-group">
-						<button
-							type="submit"
-							class="btn btn-primary btn-block"
-							id="loginButton"
+					<div class="remember-me">
+						<input type="checkbox" id="remember" name="remember" />
+						<label for="remember"
+							>Recordar sesión por 30 días</label
 						>
-							<span id="loginText">Iniciar Sesión</span>
-							<span
-								id="loginSpinner"
-								class="loading d-none"
-							></span>
-						</button>
 					</div>
+
+					<button
+						type="submit"
+						class="btn-login"
+						id="login-btn"
+						aria-describedby="login-status"
+					>
+						<span
+							class="loading-spinner"
+							id="loading-spinner"
+							aria-hidden="true"
+						></span>
+						<span id="login-text">Iniciar Sesión</span>
+					</button>
 				</form>
 
-				<div class="text-center mt-3">
-					<small class="text-secondary">
-						¿Olvidó su contraseña? Contacte al administrador del
-						sistema.
-					</small>
+				<div class="forgot-password">
+					<a href="#" onclick="showContactInfo()"
+						>¿Olvidó su contraseña?</a
+					>
+				</div>
+
+				<div class="system-info">
+					<h6>Información del Sistema</h6>
+					<p><strong>Usuario por defecto:</strong> root</p>
+					<p><strong>Contraseña por defecto:</strong> toor</p>
+					<small
+						>El usuario con ID 1 tiene acceso completo al
+						sistema</small
+					>
+				</div>
+
+				<div class="footer-text">
+					<p>
+						&copy; 2024 SENA Agro Reg. Todos los derechos
+						reservados.
+					</p>
 				</div>
 			</div>
 		</div>
 
 		<script>
-			// Login form handling
+			// Unified Login Manager following API Reference
 			class LoginManager {
 				constructor() {
-					this.form = document.getElementById("loginForm");
-					this.usernameInput = document.getElementById("username");
-					this.passwordInput = document.getElementById("password");
-					this.loginButton = document.getElementById("loginButton");
-					this.loginText = document.getElementById("loginText");
-					this.loginSpinner = document.getElementById("loginSpinner");
+					this.form = document.getElementById("login-form");
+					this.usernameField = document.getElementById("username");
+					this.passwordField = document.getElementById("password");
+					this.rememberField = document.getElementById("remember");
+					this.loginBtn = document.getElementById("login-btn");
+					this.loadingSpinner =
+						document.getElementById("loading-spinner");
+					this.loginText = document.getElementById("login-text");
 					this.alertContainer =
 						document.getElementById("alert-container");
 
-					this.initEventListeners();
+					this.initializeEventListeners();
+					this.checkExistingSession();
 				}
 
-				initEventListeners() {
+				initializeEventListeners() {
+					// Form submission
 					this.form.addEventListener("submit", (e) =>
 						this.handleLogin(e),
 					);
 
-					// Clear validation on input
-					this.usernameInput.addEventListener("input", () =>
-						this.clearFieldValidation("username"),
+					// Real-time validation clearing
+					this.usernameField.addEventListener("input", () =>
+						this.clearFieldError("username"),
 					);
-					this.passwordInput.addEventListener("input", () =>
-						this.clearFieldValidation("password"),
+					this.passwordField.addEventListener("input", () =>
+						this.clearFieldError("password"),
 					);
+
+					// Enter key handling
+					this.passwordField.addEventListener("keypress", (e) => {
+						if (e.key === "Enter" && !this.isLoading()) {
+							this.handleLogin(e);
+						}
+					});
+
+					// Prevent multiple submissions
+					this.form.addEventListener("keydown", (e) => {
+						if (e.key === "Enter" && this.isLoading()) {
+							e.preventDefault();
+						}
+					});
+				}
+
+				async checkExistingSession() {
+					const token = this.getCookie("auth_token");
+					if (!token) return;
+
+					try {
+						this.showAlert(
+							"Verificando sesión existente...",
+							"info",
+						);
+
+						const response = await fetch("/api/auth/verify", {
+							method: "POST",
+							headers: {
+								"Content-Type": "application/json",
+							},
+							body: JSON.stringify({ token: token }),
+						});
+
+						if (response.ok) {
+							const data = await response.json();
+							if (data.success) {
+								this.showAlert(
+									"Sesión válida encontrada. Redirigiendo...",
+									"success",
+								);
+								setTimeout(() => {
+									window.location.href = "/dashboard";
+								}, 1000);
+								return;
+							}
+						}
+					} catch (error) {
+						console.log("No valid session found:", error);
+					}
+
+					// Clear invalid token
+					this.deleteCookie("auth_token");
+					this.clearAlert();
 				}
 
 				async handleLogin(event) {
 					event.preventDefault();
 
-					const username = this.usernameInput.value.trim();
-					const password = this.passwordInput.value;
+					if (this.isLoading()) return;
 
-					// Basic validation
-					if (!this.validateForm(username, password)) {
+					const username = this.usernameField.value.trim();
+					const password = this.passwordField.value;
+					const remember = this.rememberField.checked;
+
+					// Validate inputs
+					if (!this.validateInputs(username, password)) {
 						return;
 					}
 
 					this.setLoading(true);
-					this.clearAlerts();
+					this.clearAlert();
 
 					try {
-						const response = await this.authenticate(
-							username,
-							password,
-						);
+						const response = await fetch("/api/auth/login", {
+							method: "POST",
+							headers: {
+								"Content-Type": "application/json",
+							},
+							body: JSON.stringify({
+								username: username,
+								password: password,
+								remember: remember,
+							}),
+						});
 
-						if (response.success) {
+						const data = await response.json();
+
+						if (response.ok && data.success) {
+							// Login successful - following API reference format
 							this.showAlert(
 								"Inicio de sesión exitoso. Redirigiendo...",
 								"success",
 							);
 
-							// Store token if provided
-							if (response.token) {
-								localStorage.setItem(
-									"authToken",
-									response.token,
+							// Store token with appropriate expiration
+							const expireDays = remember ? 30 : 7;
+							this.setCookie(
+								"auth_token",
+								data.token,
+								expireDays,
+							);
+
+							// Optional: Store user info for dashboard
+							if (data.user) {
+								sessionStorage.setItem(
+									"user_info",
+									JSON.stringify(data.user),
 								);
 							}
 
-							// Redirect after a short delay
+							// Create login event
+							this.logEvent(
+								"user_login",
+								`Usuario ${username} inició sesión`,
+							);
+
+							// Redirect to dashboard
 							setTimeout(() => {
-								window.location.href =
-									response.redirect || "/dashboard";
+								window.location.href = "/dashboard";
 							}, 1500);
 						} else {
-							this.showAlert(
-								response.message || "Credenciales incorrectas",
-								"danger",
-							);
-							this.clearForm();
+							// Login failed - handle both API formats
+							const errorMessage =
+								data.message || "Credenciales incorrectas";
+							this.showAlert(errorMessage, "danger");
+							this.clearPasswordField();
+							this.focusUsernameField();
 						}
 					} catch (error) {
 						console.error("Login error:", error);
-						this.showAlert(
-							"Error de conexión. Intente nuevamente.",
-							"danger",
-						);
+
+						// Network or server error
+						if (
+							error.name === "TypeError" ||
+							error.message.includes("fetch")
+						) {
+							this.showAlert(
+								"Error de conexión. Verifique su conexión a internet.",
+								"danger",
+							);
+						} else {
+							this.showAlert(
+								"Error interno del servidor. Intente nuevamente.",
+								"danger",
+							);
+						}
 					} finally {
 						this.setLoading(false);
 					}
 				}
 
-				async authenticate(username, password) {
-					// This would normally make an API call to the backend
-					// For now, implementing a mock authentication
-
-					const response = await fetch("/api/auth/login", {
-						method: "POST",
-						headers: {
-							"Content-Type": "application/json",
-						},
-						body: JSON.stringify({
-							username: username,
-							password: password,
-						}),
-					});
-
-					if (!response.ok) {
-						throw new Error(
-							`HTTP error! status: ${response.status}`,
-						);
-					}
-
-					return await response.json();
-				}
-
-				validateForm(username, password) {
+				validateInputs(username, password) {
 					let isValid = true;
+
+					// Clear previous errors
+					this.clearFieldError("username");
+					this.clearFieldError("password");
 
 					// Username validation
 					if (!username) {
-						this.setFieldError(
+						this.showFieldError(
 							"username",
-							"El nombre de usuario es requerido",
+							"El usuario es requerido",
 						);
 						isValid = false;
 					} else if (username.length < 3) {
-						this.setFieldError(
+						this.showFieldError(
 							"username",
-							"El nombre de usuario debe tener al menos 3 caracteres",
+							"El usuario debe tener al menos 3 caracteres",
+						);
+						isValid = false;
+					} else if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+						this.showFieldError(
+							"username",
+							"El usuario solo puede contener letras, números, guiones y guiones bajos",
 						);
 						isValid = false;
 					}
 
 					// Password validation
 					if (!password) {
-						this.setFieldError(
+						this.showFieldError(
 							"password",
 							"La contraseña es requerida",
 						);
 						isValid = false;
 					} else if (password.length < 4) {
-						this.setFieldError(
+						this.showFieldError(
 							"password",
 							"La contraseña debe tener al menos 4 caracteres",
 						);
@@ -225,77 +335,166 @@
 					return isValid;
 				}
 
-				setFieldError(fieldName, message) {
-					const input = document.getElementById(fieldName);
-					const feedback = document.getElementById(
-						`${fieldName}-feedback`,
+				showFieldError(fieldName, message) {
+					const field = document.getElementById(fieldName);
+					const errorDiv = document.getElementById(
+						`${fieldName}-error`,
 					);
 
-					input.classList.add("is-invalid");
-					input.classList.remove("is-valid");
-					feedback.textContent = message;
-				}
+					field.classList.add("is-invalid");
+					field.classList.remove("is-valid");
+					errorDiv.textContent = message;
 
-				clearFieldValidation(fieldName) {
-					const input = document.getElementById(fieldName);
-					const feedback = document.getElementById(
-						`${fieldName}-feedback`,
-					);
-
-					input.classList.remove("is-invalid", "is-valid");
-					feedback.textContent = "";
-				}
-
-				setLoading(loading) {
-					this.loginButton.disabled = loading;
-
-					if (loading) {
-						this.loginText.classList.add("d-none");
-						this.loginSpinner.classList.remove("d-none");
-					} else {
-						this.loginText.classList.remove("d-none");
-						this.loginSpinner.classList.add("d-none");
+					// Focus the first invalid field
+					if (fieldName === "username") {
+						field.focus();
 					}
 				}
 
-				showAlert(message, type = "info") {
-					const alertDiv = document.createElement("div");
-					alertDiv.className = `alert alert-${type}`;
-					alertDiv.textContent = message;
+				clearFieldError(fieldName) {
+					const field = document.getElementById(fieldName);
+					const errorDiv = document.getElementById(
+						`${fieldName}-error`,
+					);
 
-					this.alertContainer.innerHTML = "";
-					this.alertContainer.appendChild(alertDiv);
+					field.classList.remove("is-invalid");
+					if (field.value.trim()) {
+						field.classList.add("is-valid");
+					}
+					errorDiv.textContent = "";
+				}
 
-					// Auto-hide success messages
-					if (type === "success") {
+				showAlert(message, type) {
+					this.alertContainer.innerHTML = `
+                    <div class="alert alert-${type}">
+                        ${message}
+                    </div>
+                `;
+
+					// Auto-hide info messages
+					if (type === "info") {
 						setTimeout(() => {
-							alertDiv.remove();
+							this.clearAlert();
 						}, 3000);
 					}
 				}
 
-				clearAlerts() {
+				clearAlert() {
 					this.alertContainer.innerHTML = "";
 				}
 
-				clearForm() {
-					this.passwordInput.value = "";
-					this.clearFieldValidation("username");
-					this.clearFieldValidation("password");
+				setLoading(loading) {
+					this.loginBtn.disabled = loading;
+
+					if (loading) {
+						this.loadingSpinner.style.display = "inline-block";
+						this.loginText.textContent = "Iniciando sesión...";
+						this.loginBtn.setAttribute("aria-busy", "true");
+					} else {
+						this.loadingSpinner.style.display = "none";
+						this.loginText.textContent = "Iniciar Sesión";
+						this.loginBtn.setAttribute("aria-busy", "false");
+					}
+				}
+
+				isLoading() {
+					return this.loginBtn.disabled;
+				}
+
+				clearPasswordField() {
+					this.passwordField.value = "";
+					this.clearFieldError("password");
+				}
+
+				focusUsernameField() {
+					setTimeout(() => {
+						this.usernameField.focus();
+					}, 100);
+				}
+
+				// Cookie management (more secure than localStorage)
+				getCookie(name) {
+					const value = `; ${document.cookie}`;
+					const parts = value.split(`; ${name}=`);
+					if (parts.length === 2)
+						return parts.pop().split(";").shift();
+					return null;
+				}
+
+				setCookie(name, value, days) {
+					const expires = new Date();
+					expires.setTime(
+						expires.getTime() + days * 24 * 60 * 60 * 1000,
+					);
+					document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Strict;Secure=${location.protocol === "https:"}`;
+				}
+
+				deleteCookie(name) {
+					document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;SameSite=Strict`;
+				}
+
+				// Event logging for audit trail
+				async logEvent(eventName, description) {
+					try {
+						await fetch("/api/events", {
+							method: "POST",
+							headers: {
+								"Content-Type": "application/json",
+								Authorization: `Bearer ${this.getCookie("auth_token")}`,
+							},
+							body: JSON.stringify({
+								name: eventName,
+								description: description,
+							}),
+						});
+					} catch (error) {
+						console.log("Failed to log event:", error);
+					}
 				}
 			}
 
+			// Utility functions
+			function showContactInfo() {
+				alert(
+					"Para restablecer su contraseña, contacte al administrador del sistema:\n\nEmail: admin@sena.edu.co\nTeléfono: (57) 1-234-5678",
+				);
+			}
+
 			// Initialize login manager when DOM is loaded
-			document.addEventListener("DOMContentLoaded", () => {
+			document.addEventListener("DOMContentLoaded", function () {
 				new LoginManager();
 			});
 
-			// Check if user is already logged in
-			if (localStorage.getItem("authToken")) {
-				// Optionally redirect to dashboard if already logged in
-				// window.location.
-				href = "/dashboard";
-			}
+			// Handle browser back/forward button and prevent caching
+			window.addEventListener("pageshow", function (event) {
+				if (event.persisted) {
+					window.location.reload();
+				}
+			});
+
+			// Security: Clear form data when page unloads
+			window.addEventListener("beforeunload", function () {
+				const form = document.getElementById("login-form");
+				if (form) {
+					form.reset();
+				}
+			});
+
+			// Prevent form auto-fill issues
+			window.addEventListener("load", function () {
+				// Small delay to ensure browser auto-fill is complete
+				setTimeout(() => {
+					const usernameField = document.getElementById("username");
+					const passwordField = document.getElementById("password");
+
+					if (usernameField.value) {
+						usernameField.classList.add("is-valid");
+					}
+					if (passwordField.value) {
+						passwordField.classList.add("is-valid");
+					}
+				}, 500);
+			});
 		</script>
 	</body>
 </html>
