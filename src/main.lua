@@ -1,3 +1,4 @@
+production = false
 package.path = package.path .. ";./?.lua;./deps/?.lua;./deps/?/init.lua;./?/init.lua;./deps/stream/?.lua"
 
 require("class")

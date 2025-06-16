@@ -1,10 +1,7 @@
 {
-	"files.exclude": ["deps"],
-    "diagnostics.globals": [
-        "class",
-        "json"
-    ],
-    "diagnostics.disable": [
-        "lowercase-global"
-    ]
+	"files.exclude": ["src/deps"],
+	"diagnostics.globals": ["class", "json",
+        "p"],
+	"diagnostics.disable": ["lowercase-global",
+        "undefined-field"]
 }

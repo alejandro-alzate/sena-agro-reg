@@ -1,3 +1,4 @@
+---@diagnostic disable: deprecated, undefined-global, unused-local
 local ffi = require "ffi"
 local bit = require "bit"
 

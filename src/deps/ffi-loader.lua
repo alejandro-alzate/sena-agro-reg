@@ -1,3 +1,4 @@
+---@diagnostic disable: undefined-global
 exports.name = "creationix/ffi-loader"
 exports.version = "1.0.2-1"
 exports.homepage = "https://github.com/creationix/lit-ffi-loader"
