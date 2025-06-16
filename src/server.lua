@@ -222,7 +222,7 @@ end
 
 function server.init()
 	http.createServer(onRequest):listen(8080)
-	p("Listening on port 8080")
+	print("Listening on port 8080")
 	database.init()
 end
 

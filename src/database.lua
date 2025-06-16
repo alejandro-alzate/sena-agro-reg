@@ -7,9 +7,9 @@ database.index = {}
 database.index.users = {id = 1, user = 2, contact = 3, roles = 4, salt = 5,	hash = 6}
 database.index.tokens = {id = 1, owner = 2, token = 3, expires = 4}
 
-p('sqlite version:', sql.version())
 
 function database.init()
+	print(string.format('SQLite version: %s', sql.version()))
 	db = sql.open(path)
 	print("Database initialized")
 end
@@ -19,7 +19,8 @@ end
 ---@return string strsano Texto limpiado
 local function escape(str)
 	if str == nil then return "NULL" end
-	return tostring(str):gsub("'", ""):gsub("\"", ""):gsub(" ", "")
+	local safe = tostring(str):gsub("'", ""):gsub("\"", ""):gsub(" ", "")
+	return safe
 end
 
 
@@ -57,9 +58,9 @@ function database.getOrMakeToken(username, callback)
 
 						local fmt = string.format(newTokenQuery, owner, newToken, expires)
 						p(fmt)
-						db:exec(fmt, p)
+						db:exec(fmt, nil, callback(newToken))
 
-						return callback(newToken)
+						return
 					end
 				end)
 		end)
